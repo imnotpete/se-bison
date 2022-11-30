@@ -1,0 +1,105 @@
+@Toggle{
+	If OnOff of Tower Busy = false
+	{
+		If OnOff of Merge Block Wind Tower Main = True
+		{
+			@Deploy
+		}
+		Else
+		{
+			@Stow
+		}
+	}
+}
+
+@Deploy{
+	OnOff_On Tower Busy
+	OnOff_On Deployed Bridge Alert Lights
+	@Extend
+	When Current position of Piston Wind Tower = 10
+		@RotateDown
+	Delay 1000
+	When Current angle of Rotor Wind Tower < -89
+		@Lock
+}
+
+@Stow{
+	OnOff_On Tower Busy
+	Unlock Magnetic Plate Wind Tower
+	Extend Piston Wind Tower Vertical
+	When Current position of Piston Wind Tower Vertical = 5
+		@RotateUp
+	Delay 1000
+	When Current angle of Rotor Wind Tower > -1
+		@Retract
+}
+
+@Extend{
+	OnOff_Off Merge Block Wind Tower Main
+	Extend Piston Wind Tower
+	OnOff_On (Wind Tower Lights)
+	Delay 1000
+	Extend Piston Wind Tower Vertical
+}
+
+@Retract{
+	IncreaseLowerLimit Rotor Wind Tower
+	OnOff_On Merge Block Wind Tower Main
+	Retract Piston Wind Tower Vertical
+	Retract Piston Wind Tower
+	OnOff_Off (Wind Tower Lights)
+	@CheckAndDisableBridgeAlerts
+	OnOff_Off Tower Busy
+}
+
+@RotateDown{
+	Reverse Rotor Wind Tower
+	Delay 100
+	IncreaseUpperLimit Rotor Wind Tower
+	
+	When Current angle of Rotor Wind Tower < -5
+		Velocity of Rotor Wind Tower = -1
+
+	When Current angle of Rotor Wind Tower < -80
+		Velocity of Rotor Wind Tower = -0.5
+}
+
+@RotateUp{
+	RotorLock of Rotor Wind Tower = false
+	Reverse Rotor Wind Tower
+	Delay 100
+	DecreaseLowerLimit Rotor Wind Tower
+
+	When Current angle of Rotor Wind Tower > -85
+		Velocity of Rotor Wind Tower = 1
+
+	When Current angle of Rotor Wind Tower > -10
+		Velocity of Rotor Wind Tower = 0.5
+}
+
+@Lock{
+	RotorLock of Rotor Wind Tower = True
+	DecreaseUpperLimit Rotor Wind Tower
+	Retract Piston Wind Tower Vertical
+	@SettleUntilReady
+	Lock Magnetic Plate Wind Tower
+	OnOff_Off Tower Busy
+}
+
+@SettleUntilReady{
+	if Lock State of Magnetic Plate Wind Tower != Ready To Lock
+	{
+		Delay 300
+		@SettleUntilReady
+	}
+}
+
+@CheckAndDisableBridgeAlerts {
+	If OnOff of Merge Block Wind Tower Main = True
+	{
+		If OnOff of Merge Block Rover Bay Main = True
+		{
+			OnOff_Off (Deployed Bridge Alert Lights)
+		}
+	}
+}
